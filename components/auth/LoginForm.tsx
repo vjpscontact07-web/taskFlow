@@ -10,10 +10,13 @@ import { loginUser } from '@/actions/auth'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
+import { Eye, EyeOff } from 'lucide-react'
 
 export default function LoginForm() {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
+
+    const [showPassword, setShowPassword] = useState(false)
 
     const {
         register,
@@ -73,14 +76,27 @@ export default function LoginForm() {
                         <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                             Password
                         </label>
-                        <input
-                            {...register('password')}
-                            id="password"
-                            type="password"
-                            autoComplete="current-password"
-                            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                            placeholder="••••••••"
-                        />
+                        <div className="relative">
+                            <input
+                                {...register('password')}
+                                id="password"
+                                type={showPassword ? 'text' : 'password'}
+                                autoComplete="current-password"
+                                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 pr-10 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                                placeholder="••••••••"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                            >
+                                {showPassword ? (
+                                    <EyeOff className="h-5 w-5" />
+                                ) : (
+                                    <Eye className="h-5 w-5" />
+                                )}
+                            </button>
+                        </div>
                         {errors.password && (
                             <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
                         )}
