@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { taskSchema } from '@/lib/validations/task'
+import { taskSchema, partialTaskSchema } from '@/lib/validations/task'
 
 /**
  * GET /api/tasks/[id]
@@ -105,14 +105,18 @@ export async function PUT(
         const body = await request.json()
 
         // Validate input (partial update allowed)
-        const validatedFields = taskSchema.partial().safeParse(body)
-
-        if (!validatedFields.success) {
+        let validatedData;
+        try {
+            validatedData = partialTaskSchema.validateSync(body, { abortEarly: false });
+        } catch (error: any) {
             return NextResponse.json(
                 {
                     success: false,
                     error: 'Invalid input data',
-                    details: validatedFields.error.issues,
+                    details: error.inner?.map((e: any) => ({
+                        path: e.path,
+                        message: e.message
+                    })) || error.message,
                 },
                 { status: 400 }
             )
@@ -120,7 +124,7 @@ export async function PUT(
 
         const task = await prisma.task.update({
             where: { id },
-            data: validatedFields.data,
+            data: validatedData,
         })
 
         return NextResponse.json({

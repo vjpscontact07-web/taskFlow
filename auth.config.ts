@@ -10,12 +10,19 @@ export const authConfig = {
     callbacks: {
         authorized({ auth, request: { nextUrl } }) {
             const isLoggedIn = !!auth?.user;
+            const userRole = auth?.user?.role;
             const isOnDashboard = nextUrl.pathname.startsWith('/tasks') || nextUrl.pathname === '/dashboard';
+            const isOnAdmin = nextUrl.pathname.startsWith('/admin');
+
+            if (isOnAdmin) {
+                if (isLoggedIn && userRole === 'ADMIN') return true;
+                return Response.redirect(new URL('/tasks', nextUrl));
+            }
 
             if (isOnDashboard) {
                 if (isLoggedIn) return true;
                 return false; // Redirect unauthenticated users to login page
-            } else if (isLoggedIn && (nextUrl.pathname.startsWith('/login') || nextUrl.pathname.startsWith('/register'))) {
+            } else if (isLoggedIn && (nextUrl.pathname === '/' || nextUrl.pathname.startsWith('/login') || nextUrl.pathname.startsWith('/register'))) {
                 return Response.redirect(new URL('/tasks', nextUrl));
             }
             return true;

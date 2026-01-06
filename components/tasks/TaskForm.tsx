@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { yupResolver } from "@hookform/resolvers/yup";
 import {
   taskSchema,
   type TaskInput,
@@ -33,22 +33,22 @@ export default function TaskForm({ task, onSuccess }: TaskFormProps) {
     setValue,
     formState: { errors },
   } = useForm<TaskFormInput>({
-    resolver: zodResolver(taskSchema),
+    resolver: yupResolver(taskSchema) as any,
     defaultValues: task
       ? {
-          title: task.title,
-          description: task.description || "",
-          status: task.status,
-          priority: task.priority,
-          dueDate: task.dueDate
-            ? new Date(task.dueDate).toISOString().slice(0, 16)
-            : undefined,
-          attachment: task.attachment || undefined,
-        }
+        title: task.title,
+        description: task.description || "",
+        status: task.status,
+        priority: task.priority,
+        dueDate: task.dueDate
+          ? new Date(task.dueDate).toISOString().slice(0, 16)
+          : undefined,
+        attachment: task.attachment || undefined,
+      }
       : {
-          status: "TODO" as const,
-          priority: "MEDIUM" as const,
-        },
+        status: "TODO" as const,
+        priority: "MEDIUM" as const,
+      },
   });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -253,7 +253,7 @@ export default function TaskForm({ task, onSuccess }: TaskFormProps) {
               onClick={() => {
                 setSelectedFile(null);
                 setPreviewUrl(null);
-                setValue("attachment", undefined);
+                setValue("attachment", null);
               }}
               className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
             >

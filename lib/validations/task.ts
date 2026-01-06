@@ -1,18 +1,51 @@
+import * as yup from 'yup'
 
+export const taskSchema = yup.object({
+    title: yup.string().min(1, 'Title is required').max(200, 'Title too long').required('Title is required'),
+    description: yup.string().nullable(),
+    status: yup.string().oneOf(['TODO', 'IN_PROGRESS', 'COMPLETED'] as const).default('TODO').defined(),
+    priority: yup.string().oneOf(['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const).default('MEDIUM').defined(),
+    dueDate: yup.date().transform((val, originalValue) => {
+        if (originalValue === '' || originalValue === null || originalValue === undefined) return null;
+        return val;
+    }).nullable(),
+    attachment: yup.string()
+        .transform((val, originalValue) => {
+            if (originalValue === '' || originalValue === null || originalValue === undefined) return null;
+            return val;
+        })
+        .url('Must be a valid URL')
+        .nullable(),
+}).required();
 
-import { z } from 'zod'
+export type TaskInput = {
+    title: string;
+    description: string | null;
+    status: 'TODO' | 'IN_PROGRESS' | 'COMPLETED';
+    priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+    dueDate: Date | null;
+    attachment: string | null;
+};
+// TaskFormInput allows string for the datetime-local input
+export type TaskFormInput = Omit<TaskInput, 'dueDate'> & {
+    dueDate: string | Date | null;
+};
 
-export const taskSchema = z.object({
-    title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
-    description: z.string().optional(),
-    status: z.enum(['TODO', 'IN_PROGRESS', 'COMPLETED']).default('TODO'),
-    priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).default('MEDIUM'),
-    dueDate: z.preprocess(
-        (val) => (val === '' ? undefined : val),
-        z.union([z.date(), z.string()]).optional().nullable()
-    ).transform((val) => (val ? new Date(val) : val)),
-    attachment: z.string().url().optional().nullable(),
-})
-
-export type TaskInput = z.output<typeof taskSchema>
-export type TaskFormInput = z.input<typeof taskSchema>
+export const partialTaskSchema = yup.object({
+    title: yup.string().min(1, 'Title is required').max(200, 'Title too long').optional(),
+    description: yup.string().optional().nullable(),
+    status: yup.string().oneOf(['TODO', 'IN_PROGRESS', 'COMPLETED'] as const).optional(),
+    priority: yup.string().oneOf(['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const).optional(),
+    dueDate: yup.date().transform((val, originalValue) => {
+        if (originalValue === '') return undefined;
+        return val;
+    }).optional().nullable(),
+    attachment: yup.string()
+        .transform((val, originalValue) => {
+            if (originalValue === '' || originalValue === null || originalValue === undefined) return null;
+            return val;
+        })
+        .url('Must be a valid URL')
+        .optional()
+        .nullable(),
+});

@@ -21,7 +21,7 @@
 
 1. **Navigate to project:**
    ```bash
-   cd /home/neosoft/.gemini/antigravity/scratch/taskflow
+   cd ~/taskflow
    ```
 
 2. **Create `.env.local` file:**

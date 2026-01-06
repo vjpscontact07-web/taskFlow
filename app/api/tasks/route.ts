@@ -71,14 +71,18 @@ export async function POST(request: NextRequest) {
         const body = await request.json()
 
         // Validate input
-        const validatedFields = taskSchema.safeParse(body)
-
-        if (!validatedFields.success) {
+        let validatedData;
+        try {
+            validatedData = taskSchema.validateSync(body, { abortEarly: false });
+        } catch (error: any) {
             return NextResponse.json(
                 {
                     success: false,
                     error: 'Invalid input data',
-                    details: validatedFields.error.issues,
+                    details: error.inner?.map((e: any) => ({
+                        path: e.path,
+                        message: e.message
+                    })) || error.message,
                 },
                 { status: 400 }
             )
@@ -86,7 +90,7 @@ export async function POST(request: NextRequest) {
 
         const task = await prisma.task.create({
             data: {
-                ...validatedFields.data,
+                ...validatedData,
                 userId: session.user.id,
             },
         })

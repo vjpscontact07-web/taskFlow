@@ -2,14 +2,14 @@
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { taskSchema, type TaskInput } from "@/lib/validations/task";
+import { taskSchema, partialTaskSchema, type TaskInput } from "@/lib/validations/task";
 import { revalidatePath } from "next/cache";
 
 /**
  * Get all tasks for the current user
  * Admins can see all tasks
  */
-export async function getTasks() {
+export async function getTasks(targetUserId?: string) {
   try {
     const session = await auth();
 
@@ -20,9 +20,21 @@ export async function getTasks() {
       };
     }
 
-    // Admin can see all tasks, users see only their own
+    // Role-based where clause
+    let whereClause: any = {};
+
+    if (session.user.role === "ADMIN") {
+      // Admin sees all by default, or filtered by targetUserId if provided
+      if (targetUserId) {
+        whereClause.userId = targetUserId;
+      }
+    } else {
+      // Regular user only sees their own tasks
+      whereClause.userId = session.user.id;
+    }
+
     const tasks = await prisma.task.findMany({
-      where: session.user.role === "ADMIN" ? {} : { userId: session.user.id },
+      where: whereClause,
       include: {
         user: {
           select: {
@@ -66,9 +78,10 @@ export async function createTask(data: TaskInput) {
     }
 
     // Validate input
-    const validatedFields = taskSchema.safeParse(data);
-
-    if (!validatedFields.success) {
+    let validatedData;
+    try {
+      validatedData = taskSchema.validateSync(data, { abortEarly: false });
+    } catch (error) {
       return {
         success: false,
         error: "Invalid input data",
@@ -77,7 +90,7 @@ export async function createTask(data: TaskInput) {
 
     const task = await prisma.task.create({
       data: {
-        ...validatedFields.data,
+        ...validatedData,
         userId: session.user.id,
       },
     });
@@ -137,9 +150,10 @@ export async function updateTask(id: string, data: Partial<TaskInput>) {
     }
 
     // Validate input
-    const validatedFields = taskSchema.partial().safeParse(data);
-
-    if (!validatedFields.success) {
+    let validatedData;
+    try {
+      validatedData = partialTaskSchema.validateSync(data, { abortEarly: false });
+    } catch (error) {
       return {
         success: false,
         error: "Invalid input data",
@@ -148,7 +162,7 @@ export async function updateTask(id: string, data: Partial<TaskInput>) {
 
     const task = await prisma.task.update({
       where: { id },
-      data: validatedFields.data,
+      data: validatedData,
     });
 
     revalidatePath("/tasks");
@@ -193,14 +207,11 @@ export async function deleteTask(id: string) {
       };
     }
 
-    // Only task owner or admin can delete
-    if (
-      existingTask.userId !== session.user.id &&
-      session.user.role !== "ADMIN"
-    ) {
+    // Only admin can delete tasks
+    if (session.user.role !== "ADMIN") {
       return {
         success: false,
-        error: "Forbidden",
+        error: "Only administrators can delete tasks",
       };
     }
 

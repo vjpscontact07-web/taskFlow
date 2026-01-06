@@ -1,16 +1,15 @@
-
-
 'use client'
 
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { yupResolver } from '@hookform/resolvers/yup'
 import { registerSchema, type RegisterInput } from '@/lib/validations/auth'
 import { registerUser } from '@/actions/auth'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react'
+import { Button, Input, Card, CardBody, CardHeader } from '@heroui/react'
 
 export default function RegisterForm() {
     const router = useRouter()
@@ -22,7 +21,7 @@ export default function RegisterForm() {
         handleSubmit,
         formState: { errors },
     } = useForm<RegisterInput>({
-        resolver: zodResolver(registerSchema),
+        resolver: yupResolver(registerSchema),
     })
 
     const onSubmit = async (data: RegisterInput) => {
@@ -45,97 +44,83 @@ export default function RegisterForm() {
     }
 
     return (
-        <div className="w-full max-w-md space-y-8">
-            <div className="text-center">
-                <h2 className="text-3xl font-bold">Create an account</h2>
-                <p className="mt-2 text-gray-600">Get started with TaskFlow</p>
-            </div>
+        <Card className="glass border-none shadow-2xl">
+            <CardHeader className="flex flex-col gap-1 pt-10 pb-4 px-8 text-center">
+                <h2 className="text-3xl font-bold tracking-tight">Create an account</h2>
+                <p className="text-foreground/50 font-medium">Get started with TaskFlow</p>
+            </CardHeader>
+            <CardBody className="px-8 pb-10">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                    <Input
+                        {...register('name')}
+                        label="Full Name"
+                        placeholder="John Doe"
+                        labelPlacement="outside"
+                        variant="bordered"
+                        className="font-medium"
+                        isInvalid={!!errors.name}
+                        errorMessage={errors.name?.message}
+                    />
 
-            <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-6">
-                <div className="space-y-4">
-                    <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                            Full name
-                        </label>
-                        <input
-                            {...register('name')}
-                            id="name"
-                            type="text"
-                            autoComplete="name"
-                            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                            placeholder="John Doe"
+                    <Input
+                        {...register('email')}
+                        label="Email"
+                        placeholder="you@example.com"
+                        labelPlacement="outside"
+                        variant="bordered"
+                        className="font-medium"
+                        isInvalid={!!errors.email}
+                        errorMessage={errors.email?.message}
+                    />
+
+                    <div className="space-y-1">
+                        <Input
+                            {...register('password')}
+                            label="Password"
+                            placeholder="••••••••"
+                            labelPlacement="outside"
+                            type={showPassword ? 'text' : 'password'}
+                            variant="bordered"
+                            className="font-medium"
+                            isInvalid={!!errors.password}
+                            errorMessage={errors.password?.message}
+                            endContent={
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="focus:outline-none"
+                                >
+                                    {showPassword ? (
+                                        <EyeOff className="text-foreground/30 w-5 h-5" />
+                                    ) : (
+                                        <Eye className="text-foreground/30 w-5 h-5" />
+                                    )}
+                                </button>
+                            }
                         />
-                        {errors.name && (
-                            <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
-                        )}
-                    </div>
-
-                    <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                            Email address
-                        </label>
-                        <input
-                            {...register('email')}
-                            id="email"
-                            type="email"
-                            autoComplete="email"
-                            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                            placeholder="you@example.com"
-                        />
-                        {errors.email && (
-                            <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-                        )}
-                    </div>
-
-                    <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                            Password
-                        </label>
-                        <div className="relative">
-                            <input
-                                {...register('password')}
-                                id="password"
-                                type={showPassword ? 'text' : 'password'}
-                                autoComplete="new-password"
-                                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 pr-10 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                                placeholder="••••••••"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
-                            >
-                                {showPassword ? (
-                                    <EyeOff className="h-5 w-5" />
-                                ) : (
-                                    <Eye className="h-5 w-5" />
-                                )}
-                            </button>
-                        </div>
-                        {errors.password && (
-                            <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-                        )}
-                        <p className="mt-1 text-xs text-gray-500">
-                            Must be 8+ characters with uppercase, lowercase, and number
+                        <p className="text-[10px] text-foreground/40 font-medium px-1">
+                            8+ characters with uppercase, lowercase, and number
                         </p>
                     </div>
-                </div>
 
-                <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    {isLoading ? 'Creating account...' : 'Create account'}
-                </button>
+                    <Button
+                        type="submit"
+                        isLoading={isLoading}
+                        className="w-full btn-primary text-white font-bold h-12 shadow-lg"
+                    >
+                        Create Account
+                    </Button>
 
-                <p className="text-center text-sm text-gray-600">
-                    Already have an account?{' '}
-                    <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
-                        Sign in
-                    </Link>
-                </p>
-            </form>
-        </div>
+                    <div className="text-center pt-2">
+                        <p className="text-sm text-foreground/50 font-medium">
+                            Already have an account?{' '}
+                            <Link href="/login" className="text-primary font-bold hover:underline">
+                                Sign in
+                            </Link>
+                        </p>
+                    </div>
+                </form>
+            </CardBody>
+        </Card>
     )
 }

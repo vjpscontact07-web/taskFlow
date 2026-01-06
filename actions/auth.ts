@@ -2,26 +2,27 @@
 
 'use server'
 
+import { signIn } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { registerSchema, type RegisterInput } from '@/lib/validations/auth'
 import { hash } from 'bcryptjs'
-import { signIn } from '@/lib/auth'
 import { AuthError } from 'next-auth'
 
 
 export async function registerUser(data: RegisterInput) {
     try {
         // Validate input
-        const validatedFields = registerSchema.safeParse(data)
-
-        if (!validatedFields.success) {
+        let validatedData;
+        try {
+            validatedData = registerSchema.validateSync(data, { abortEarly: false });
+        } catch (error) {
             return {
                 success: false,
                 error: 'Invalid input data',
             }
         }
 
-        const { name, email, password } = validatedFields.data
+        const { name, email, password } = validatedData
 
         // Check if user already exists
         const existingUser = await prisma.user.findUnique({
